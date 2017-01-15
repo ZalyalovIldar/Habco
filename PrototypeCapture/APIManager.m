@@ -21,13 +21,13 @@
 
 - (NSString *)apiURL:(NSString *)node {
     if(node != nil)
-        return [NSString stringWithFormat:@"%@%@", API_BASE_URL, node];
+        return [NSString stringWithFormat:@"%@%@", API_URL, node];
     else
         return API_BASE_URL;
 }
 
 - (AFHTTPRequestOperationManager *)getManager {
-    AFHTTPRequestOperationManager *_manager = [[AFHTTPRequestOperationManager alloc] initWithBaseURL:[NSURL URLWithString:API_BASE_URL]];
+    AFHTTPRequestOperationManager *_manager = [[AFHTTPRequestOperationManager alloc] initWithBaseURL:[NSURL URLWithString:API_URL]];
     _manager.responseSerializer = [AFJSONResponseSerializer serializer];
     _manager.responseSerializer.acceptableContentTypes = [NSSet setWithArray:@[@"application/json",@"text/html", @"text/plain"]];
         
@@ -41,15 +41,15 @@
 - (void)sendUserData:(NSDictionary *)data sucess:(void (^)(BOOL sucess))success
                      failure:(void (^)(NSError *error))failure{
     
-    NSDictionary *parameters = @{
-                           @"user_name":data[appDataDictString(UserName)],
-                           @"app_name" :data[appDataDictString(AppName)],
-                           @"data"     :data[appDataDictString(AppRecords)],
-                           };
-    NSString *endpoint = [NSString stringWithFormat:@"v1/record"];
+//    NSDictionary *parameters = @{
+//                           @"user_name":data[appDataDictString(UserName)],
+//                           @"app_name" :data[appDataDictString(AppName)],
+//                           @"data"     :data[appDataDictString(AppRecords)],
+//                           };
+    NSString *endpoint = [NSString stringWithFormat:@"api/v1/record"];
     NSString *url = [self apiURL:endpoint];
     AFHTTPRequestOperationManager *manager = [self getManager];
-    [manager POST:url parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [manager POST:url parameters:data success:^(AFHTTPRequestOperation *operation, id responseObject) {
         success(true);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         failure(error);

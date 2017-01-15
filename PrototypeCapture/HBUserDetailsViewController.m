@@ -18,6 +18,8 @@
 #import "HBNavigationController.h"
 #import "HBHeatmapsViewController.h"
 #import "LPPrototypeCaptureRecorder.h"
+#import "HBHeatmapRenderer.h"
+#import "APIManager.h"
 
 @import AVKit;
 @import AVFoundation;
@@ -33,13 +35,14 @@ static NSString *const kRecordCell = @"kRecordCell";
 @property (weak, nonatomic) IBOutlet UILabel *subtitleLabel;
 @property (weak, nonatomic) IBOutlet UIButton *heatmapButton;
 @property (weak, nonatomic) IBOutlet UILabel *dateLabel;
+@property (weak, nonatomic) IBOutlet UIButton *sendButton;
 @property (weak, nonatomic) IBOutlet UITextView *descriptionTextView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *descriptionTextViewHeightConstraint;
 @property (weak, nonatomic) IBOutlet UIView *emptyView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *emptyViewTopConstraint;
 
 @property (nonatomic, strong, readwrite) HBCPrototypeUser *user;
-
+@property (nonatomic, strong) HBHeatmapRenderer *renderer;
 @property (nonatomic, strong) NSMutableArray *records;
 
 @end
@@ -66,6 +69,7 @@ static NSString *const kRecordCell = @"kRecordCell";
     [super viewDidLoad];
     
     self.title = self.user.prototype.name;
+    
     
     self.navigationItem.rightBarButtonItems = @[[[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"addIcon"] style:UIBarButtonItemStylePlain target:self action:@selector(addNewRecord:)], [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"optionsButton"] style:UIBarButtonItemStylePlain target:self action:@selector(showOptions:)]];
     
@@ -165,6 +169,19 @@ static NSString *const kRecordCell = @"kRecordCell";
 }
 
 #pragma mark UIActions
+- (IBAction)sendRecordsPressed:(id)sender {
+    self.renderer = [[HBHeatmapRenderer alloc] initWithPrototype:self.user.prototype];
+    typeof(self) __weak weakSelf = self;
+    [self.renderer startHeatmapsRendering];
+    [self.renderer setCompletionBlock:^(NSArray<HBHeatmap *> *arr) {
+       NSDictionary *params =  [weakSelf getParamsForRequestFromArr:arr];
+        [[APIManager sharedInstance] sendUserData:params sucess:^(BOOL sucess) {
+            NSLog(@"Success!");
+        } failure:^(NSError *error) {
+            NSLog(@"Error: %@",error.description);
+        }];
+    }];
+}
 
 - (IBAction)addNewRecord:(id)sender {
     HBRecordViewController *vc = [[HBRecordViewController alloc] initWithUser:self.user];
@@ -255,6 +272,50 @@ static NSString *const kRecordCell = @"kRecordCell";
         [[HBPrototypesManager sharedManager] removeRecord:record];
         [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
     }
+}
+
+#pragma mark - Helpers
+
+- (NSDictionary *)getParamsForRequestFromArr:(NSArray<HBHeatmap *>*)dataArr{
+    NSMutableArray *imagesArr = [NSMutableArray new];
+    
+    for (HBHeatmap *map in dataArr){
+        UIImage *firstImage = [UIImage imageWithContentsOfFile:map.pathToScreenshot];
+        UIImage *secondImage = [UIImage imageWithContentsOfFile:map.pathToHeatmap];
+        UIImage *finalImage = [self imageByCombiningImage:firstImage withImage:secondImage];
+       
+        NSData* pictureData = UIImagePNGRepresentation(finalImage);
+        
+        NSString *imageString = [pictureData base64EncodedStringWithOptions:0];
+        
+        NSDictionary *dataDict = @{@"data":imageString, @"emotions":@[@"test emogi", @"second emoji"]};
+        
+        [imagesArr addObject:dataDict];
+    }
+   
+    
+    
+    NSDictionary *dict = @{
+                           @"user_name":@"Ildar",
+                           @"app_name" :@"Super duper Name!!!",
+                           @"app_desc" :@"Desc",
+                           @"data"     : @{@"images": imagesArr}
+                           };
+    return dict;
+}
+
+- (UIImage*)imageByCombiningImage:(UIImage*)firstImage withImage:(UIImage*)secondImage {
+    
+    UIGraphicsBeginImageContext(firstImage.size);
+    
+    [firstImage drawInRect:CGRectMake(0,0,firstImage.size.width, firstImage.size.height)];
+    [secondImage drawInRect:CGRectMake(0,firstImage.size.height,secondImage.size.width, secondImage.size.height)];
+    
+    UIImage *finalImage = UIGraphicsGetImageFromCurrentImageContext();
+    
+    UIGraphicsEndImageContext();
+    
+    return finalImage;
 }
 
 @end

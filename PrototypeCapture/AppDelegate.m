@@ -14,6 +14,7 @@
 #import "NSDictionary+NSURL.h"
 #import <MagicalRecord/MagicalRecord.h>
 #import <Google/Analytics.h>
+#import "APIManager.h"
 
 @import SafariServices;
 @import AVKit;
@@ -56,7 +57,7 @@
             [self openSafariViewController];
         }
     });
-    
+       
     return YES;
 }
 
