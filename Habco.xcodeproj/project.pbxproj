@@ -799,7 +799,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = E020037691273759889D3B7E /* Pods-Habco.debug.xcconfig */;
 			buildSettings = {
-				API_BASE_URL = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PREFIX_HEADER = PrototypeCapture/PrefixHeader.pch;
@@ -816,7 +815,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FDAAA2872BD12AB3B67A9DCA /* Pods-Habco.release.xcconfig */;
 			buildSettings = {
-				API_BASE_URL = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PREFIX_HEADER = PrototypeCapture/PrefixHeader.pch;

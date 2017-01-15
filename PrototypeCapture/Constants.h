@@ -23,6 +23,7 @@
 #endif
 
 // API
+#define API_URL @"http://192.168.22.243:3000/"
 #define API_BASE_URL [[[NSBundle mainBundle] infoDictionary] valueForKey:@"API_BASE_URL"]
 
 // Colors
@@ -44,8 +45,10 @@
 typedef enum {
     UserName,
     AppName,
+    AppDesc,
     AppRecords,
+    
 } MenuControllers;
 
-#define appDataDictString(enum) [@[@"userName",@"appName",@"appRecords"] objectAtIndex:enum]
+#define appDataDictString(enum) [@[@"userName",@"appName",@"appDesc",@"appRecords"] objectAtIndex:enum]
 

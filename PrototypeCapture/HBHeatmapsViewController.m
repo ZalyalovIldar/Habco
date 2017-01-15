@@ -98,6 +98,7 @@ static NSString *const kHeatmapCellIdentifier = @"HeatmapCell";
     [self.renderer setProgressBlock:^(float progress, HBHeatmap *heatmap) {
         if (weakSelf.heatmaps.count != weakSelf.renderer.allHeatmaps.count) {
             weakSelf.heatmaps = [weakSelf.renderer.allHeatmaps copy];
+
             [weakSelf.collectionView reloadData];
             return;
         }
