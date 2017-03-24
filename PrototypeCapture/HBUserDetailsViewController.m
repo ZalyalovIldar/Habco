@@ -77,6 +77,10 @@ static NSString *const kRecordCell = @"kRecordCell";
     [self.tableView registerNib:nib forCellReuseIdentifier:kRecordCell];
     
     self.records = [NSMutableArray array];
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"recordCount"] != [NSNumber numberWithUnsignedInteger:self.user.records.count]){
+        [self sendUserData];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -87,6 +91,66 @@ static NSString *const kRecordCell = @"kRecordCell";
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
+}
+
+#pragma mark - Custom Methods
+
+- (void)sendUserData{
+    HBHeatmapRenderer *renderer = [[HBHeatmapRenderer alloc] initWithPrototype:self.user.prototype];
+    typeof(self) __weak weakSelf = self;
+    [renderer startHeatmapsRendering];
+    [renderer setCompletionBlock:^(NSArray<HBHeatmap *> *arr) {
+        NSDictionary *params =  [weakSelf getParamsForRequestFromArr:arr];
+        [[APIManager sharedInstance] sendUserData:params sucess:^(BOOL sucess) {
+            NSLog(@"User data send with Success!");
+            
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithUnsignedInteger:weakSelf.user.records.count] forKey:@"recordCount"];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+        } failure:^(NSError *error) {
+            NSLog(@"Error when sending user data: %@",error.description);
+        }];
+    }];
+    
+    
+}
+
+#pragma mark - Helpers
+
+- (NSDictionary *)getParamsForRequestFromArr:(NSArray<HBHeatmap *>*)dataArr{
+    NSMutableArray *imagesArr = [NSMutableArray new];
+    NSMutableArray *videosArr = [NSMutableArray new];
+    
+    //get and convert images
+    for (HBHeatmap *map in dataArr){
+        UIImage *headMapImage = [UIImage imageWithContentsOfFile:map.pathToHeatmap];
+        
+        NSData* pictureData = UIImagePNGRepresentation(headMapImage);
+        
+        NSString *imageString = [pictureData base64EncodedStringWithOptions:0];
+        
+        NSDictionary *dataDict = @{@"data":imageString, @"emotions":@[@"test emogi", @"second emoji"]};
+        
+        [imagesArr addObject:dataDict];
+    }
+    for (HBCPrototypeRecord *record in self.user.records){
+        NSURL *urlToVideo = [NSURL fileURLWithPath:[[[HBPrototypesManager sharedManager] pathToFolder] stringByAppendingString: record.pathToVideo]];
+        NSLog(@"URL: %@",urlToVideo);
+        NSData *fileData = [NSData dataWithContentsOfURL:urlToVideo];
+        NSString *base64String = [fileData base64EncodedStringWithOptions:0];
+        
+        NSDictionary *dataDict = @{@"data":base64String};
+        
+        [videosArr addObject:dataDict];
+    }
+    
+    //get and convert video
+    NSDictionary *dict = @{
+                           @"user_name":self.user.name,
+                           @"app_name" :self.user.prototype.name,
+                           @"app_desc" :self.user.prototype.prototypeDescription,
+                           @"data"     : @{@"images": imagesArr,@"videos":videosArr}
+                           };
+    return dict;
 }
 
 #pragma mark Info
@@ -169,19 +233,6 @@ static NSString *const kRecordCell = @"kRecordCell";
 }
 
 #pragma mark UIActions
-- (IBAction)sendRecordsPressed:(id)sender {
-    self.renderer = [[HBHeatmapRenderer alloc] initWithPrototype:self.user.prototype];
-    typeof(self) __weak weakSelf = self;
-    [self.renderer startHeatmapsRendering];
-    [self.renderer setCompletionBlock:^(NSArray<HBHeatmap *> *arr) {
-       NSDictionary *params =  [weakSelf getParamsForRequestFromArr:arr];
-        [[APIManager sharedInstance] sendUserData:params sucess:^(BOOL sucess) {
-            NSLog(@"Success!");
-        } failure:^(NSError *error) {
-            NSLog(@"Error: %@",error.description);
-        }];
-    }];
-}
 
 - (IBAction)addNewRecord:(id)sender {
     HBRecordViewController *vc = [[HBRecordViewController alloc] initWithUser:self.user];
@@ -274,48 +325,5 @@ static NSString *const kRecordCell = @"kRecordCell";
     }
 }
 
-#pragma mark - Helpers
-
-- (NSDictionary *)getParamsForRequestFromArr:(NSArray<HBHeatmap *>*)dataArr{
-    NSMutableArray *imagesArr = [NSMutableArray new];
-    
-    for (HBHeatmap *map in dataArr){
-        UIImage *firstImage = [UIImage imageWithContentsOfFile:map.pathToScreenshot];
-        UIImage *secondImage = [UIImage imageWithContentsOfFile:map.pathToHeatmap];
-        UIImage *finalImage = [self imageByCombiningImage:firstImage withImage:secondImage];
-       
-        NSData* pictureData = UIImagePNGRepresentation(finalImage);
-        
-        NSString *imageString = [pictureData base64EncodedStringWithOptions:0];
-        
-        NSDictionary *dataDict = @{@"data":imageString, @"emotions":@[@"test emogi", @"second emoji"]};
-        
-        [imagesArr addObject:dataDict];
-    }
-   
-    
-    
-    NSDictionary *dict = @{
-                           @"user_name":@"Ildar",
-                           @"app_name" :@"Super duper Name!!!",
-                           @"app_desc" :@"Desc",
-                           @"data"     : @{@"images": imagesArr}
-                           };
-    return dict;
-}
-
-- (UIImage*)imageByCombiningImage:(UIImage*)firstImage withImage:(UIImage*)secondImage {
-    
-    UIGraphicsBeginImageContext(firstImage.size);
-    
-    [firstImage drawInRect:CGRectMake(0,0,firstImage.size.width, firstImage.size.height)];
-    [secondImage drawInRect:CGRectMake(0,firstImage.size.height,secondImage.size.width, secondImage.size.height)];
-    
-    UIImage *finalImage = UIGraphicsGetImageFromCurrentImageContext();
-    
-    UIGraphicsEndImageContext();
-    
-    return finalImage;
-}
 
 @end

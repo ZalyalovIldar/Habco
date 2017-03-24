@@ -23,7 +23,7 @@
 #endif
 
 // API
-#define API_URL @"http://192.168.22.243:3000/"
+#define API_URL @"https://diplom-server.herokuapp.com/"
 #define API_BASE_URL [[[NSBundle mainBundle] infoDictionary] valueForKey:@"API_BASE_URL"]
 
 // Colors

@@ -244,6 +244,7 @@ static NSString *const kSliderCell = @"kSliderCell";
     }
 }
 
+
 #pragma mark Info
 
 - (void)setThumbnailImage {
@@ -434,7 +435,7 @@ static NSString *const kSliderCell = @"kSliderCell";
     if (!self.record) {
         return;
     }
-    
+    #warning Here Share option
     UIAlertController *actionSheet = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Options", nil) message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     [actionSheet addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Share", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         NSArray *itemsToShare = @[[NSURL fileURLWithPath:[[[HBPrototypesManager sharedManager] pathToFolder] stringByAppendingString:self.record.pathToVideo]]];
